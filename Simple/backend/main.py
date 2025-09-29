@@ -1,33 +1,28 @@
 import uvicorn
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import PlainTextResponse
+from fastapi.responses import HTMLResponse
 from pydantic import BaseModel
 from typing import List
 from motor.motor_asyncio import AsyncIOMotorClient
+from dotenv import load_dotenv
+import os
 
+# ✅ Load environment variables
+load_dotenv()
+MONGO_URL = os.getenv("MONGO_URL")
 
-class Fruit(BaseModel):
-    name: str
-
-
-class Fruits(BaseModel):
-    fruits: List[Fruit]
-
-
+# ✅ FastAPI app
 app = FastAPI(debug=True)
 
 # ✅ MongoDB connection
-# ✅ MongoDB connection
-MONGO_URL = "mongodb+srv://"
 client = AsyncIOMotorClient(MONGO_URL)
-db = client["pydata"]   # Database name (same as connection string)
-collection = db["fruits"]  # Collection name
-
+db = client["fruitdb"]   # Database
+collection = db["fruits"]  # Collection
 
 # ✅ CORS setup
 origins = [
-    "http://localhost:5173",
+    "http://localhost:5173",  # React frontend
 ]
 
 app.add_middleware(
@@ -38,18 +33,15 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+# ✅ Models
+class Fruit(BaseModel):
+    name: str
 
-from fastapi import FastAPI
-from fastapi.responses import HTMLResponse
-
-app = FastAPI()
-
-# @app.get("/")
-# def read_root():
-#     return PlainTextResponse("HI your server is running successfully")
+class Fruits(BaseModel):
+    fruits: List[Fruit]
 
 
-
+# ✅ Root Route (Attractive Page)
 @app.get("/", response_class=HTMLResponse)
 def read_root():
     return """
@@ -67,16 +59,16 @@ def read_root():
                 height: 100vh;
                 margin: 0;
                 font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-                background: linear-gradient(135deg, #a1c4fd, #c2e9fb); /* light gradient */
+                background: linear-gradient(135deg, #d4fc79, #96e6a1); /* 🌿 Light green gradient */
                 color: #333;
                 text-align: center;
             }
             .container {
-                background: rgba(255, 255, 255, 0.8);
+                background: rgba(255, 255, 255, 0.9);
                 padding: 40px;
                 border-radius: 20px;
                 box-shadow: 0 10px 30px rgba(0,0,0,0.1);
-                animation: fadeIn 2s ease-in-out;
+                animation: fadeIn 1.5s ease-in-out;
             }
             h1 {
                 font-size: 3rem;
@@ -89,7 +81,7 @@ def read_root():
                 color: #555;
             }
             @keyframes fadeIn {
-                0% { opacity: 0; transform: translateY(-50px); }
+                0% { opacity: 0; transform: translateY(-30px); }
                 100% { opacity: 1; transform: translateY(0); }
             }
         </style>
@@ -97,7 +89,7 @@ def read_root():
     <body>
         <div class="container">
             <h1>🚀 Server is Running!</h1>
-            <p>Your FastAPI backend is working perfectly.</p>
+            <p>Your FastAPI backend is connected & working perfectly ✅</p>
         </div>
     </body>
     </html>
@@ -121,5 +113,6 @@ async def add_fruit(fruit: Fruit):
     return fruit
 
 
+# ✅ Run Server
 if __name__ == "__main__":
-    uvicorn.run(app, host="0.0.0.0", port=8000)
+    uvicorn.run(app, host="0.0.0.0", port=int(os.getenv("PORT", 5000)))
